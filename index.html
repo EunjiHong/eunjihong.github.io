@@ -1,18 +1,110 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <title>Eunji Hong Portfolio</title>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" type="image/x-icon" href="favicon.ico?">
-    <link rel="stylesheet" type="text/css" href="style.css">
+  <title>Eunji Hong Portfolio with PDF.js</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { margin: 0; }
+    #pdf-container {
+      position: relative;
+      text-align: center;
+    }
+    .pdf-canvas {
+      display: block;
+      margin: 0 auto;
+    }
+    .link-overlay {
+      position: absolute;
+      border: 1px solid transparent;
+      cursor: pointer;
+      /* Uncomment to see the overlays during testing */
+      /* background-color: rgba(0, 0, 255, 0.2); */
+    }
+  </style>
 </head>
-
 <body>
-    <div class="pdf-container">
-        <embed src="Portfolio_Eunji_Hong.pdf" type="application/pdf" title="Portfolio Preview">
-    </div>
-</body>
+  <div id="pdf-container"></div>
 
+  <!-- PDF.js library from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
+  <script>
+    // Set the PDF.js worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
+
+    // URL of your PDF file (assumed local in the same directory)
+    const url = './Portfolio_Eunji_Hong.pdf';
+    const container = document.getElementById('pdf-container');
+
+    // Load the PDF document
+    pdfjsLib.getDocument(url).promise.then(pdfDoc => {
+      // Loop through each page in the PDF
+      for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+        pdfDoc.getPage(pageNum).then(page => {
+          const scale = 1.5;
+          const viewport = page.getViewport({ scale: scale });
+          
+          // Create a wrapper for the page (needed for positioning overlays)
+          const pageWrapper = document.createElement('div');
+          pageWrapper.style.position = 'relative';
+          pageWrapper.style.width = viewport.width + 'px';
+          pageWrapper.style.height = viewport.height + 'px';
+          pageWrapper.style.display = 'inline-block';
+          pageWrapper.style.marginBottom = '10px';
+          
+          // Create a canvas to render the PDF page
+          const canvas = document.createElement('canvas');
+          canvas.className = 'pdf-canvas';
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          const context = canvas.getContext('2d');
+
+          // Append the canvas to the wrapper and then the wrapper to the container
+          pageWrapper.appendChild(canvas);
+          container.appendChild(pageWrapper);
+
+          // Render the PDF page into the canvas
+          page.render({
+            canvasContext: context,
+            viewport: viewport
+          }).promise.then(() => {
+            // Once rendering is done, get annotations for link handling
+            page.getAnnotations().then(annotations => {
+              annotations.forEach(annotation => {
+                if (annotation.subtype === 'Link' && annotation.url) {
+                  // annotation.rect gives [x1, y1, x2, y2] in PDF coordinate space.
+                  // Convert these to canvas coordinates. Note: PDF coordinates have the origin at the bottom-left.
+                  const [x1, y1, x2, y2] = annotation.rect;
+                  const left = x1 * scale;
+                  const top = viewport.height - (y2 * scale);
+                  const width = (x2 - x1) * scale;
+                  const height = (y2 - y1) * scale;
+
+                  // Create a transparent overlay div for the link area
+                  const linkDiv = document.createElement('div');
+                  linkDiv.className = 'link-overlay';
+                  linkDiv.style.left = left + 'px';
+                  linkDiv.style.top = top + 'px';
+                  linkDiv.style.width = width + 'px';
+                  linkDiv.style.height = height + 'px';
+
+                  // Attach a click event to open the link in a new tab
+                  linkDiv.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    window.open(annotation.url, '_blank');
+                  });
+
+                  // Append the overlay to the page wrapper
+                  pageWrapper.appendChild(linkDiv);
+                }
+              });
+            });
+          });
+        });
+      }
+    }).catch(err => {
+      console.error('Error loading PDF:', err);
+    });
+  </script>
+</body>
 </html>
