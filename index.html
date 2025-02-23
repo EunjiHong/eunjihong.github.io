@@ -2,84 +2,17 @@
 <html>
 
 <head>
-  <title>Eunji Hong Portfolio with PDF.js</title>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="styles.css">
+    <title>Eunji Hong Portfolio</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/x-icon" href="favicon.ico?">
+    <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 
 <body>
-  <div id="pdf-container"></div>
-
-  <!-- PDF.js library from CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.min.js"></script>
-  <script>
-    // Set the PDF.js worker
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.10.377/pdf.worker.min.js';
-
-    // URL of your PDF file (assumed local in the same directory)
-    const url = './Portfolio_Eunji_Hong.pdf';
-    const container = document.getElementById('pdf-container');
-
-    pdfjsLib.getDocument(url).promise.then(pdfDoc => {
-      for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
-        pdfDoc.getPage(pageNum).then(page => {
-          // Adjust the scale to reduce zoom (e.g., 1.0)
-          const scale = 1.0;
-          const viewport = page.getViewport({ scale: scale });
-
-          const pageWrapper = document.createElement('div');
-          pageWrapper.style.position = 'relative';
-          pageWrapper.style.width = viewport.width + 'px';
-          pageWrapper.style.height = viewport.height + 'px';
-          pageWrapper.style.display = 'inline-block';
-          pageWrapper.style.marginBottom = '10px';
-
-          const canvas = document.createElement('canvas');
-          canvas.className = 'pdf-canvas';
-          canvas.width = viewport.width;
-          canvas.height = viewport.height;
-          const context = canvas.getContext('2d');
-
-          pageWrapper.appendChild(canvas);
-          container.appendChild(pageWrapper);
-
-          page.render({
-            canvasContext: context,
-            viewport: viewport
-          }).promise.then(() => {
-            page.getAnnotations().then(annotations => {
-              annotations.forEach(annotation => {
-                if (annotation.subtype === 'Link' && annotation.url) {
-                  const [x1, y1, x2, y2] = annotation.rect;
-                  const left = x1 * scale;
-                  const top = viewport.height - (y2 * scale);
-                  const width = (x2 - x1) * scale;
-                  const height = (y2 - y1) * scale;
-
-                  const linkDiv = document.createElement('div');
-                  linkDiv.className = 'link-overlay';
-                  linkDiv.style.left = left + 'px';
-                  linkDiv.style.top = top + 'px';
-                  linkDiv.style.width = width + 'px';
-                  linkDiv.style.height = height + 'px';
-
-                  linkDiv.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    window.open(annotation.url, '_blank');
-                  });
-
-                  pageWrapper.appendChild(linkDiv);
-                }
-              });
-            });
-          });
-        });
-      }
-    }).catch(err => {
-      console.error('Error loading PDF:', err);
-    });
-  </script>
+    <div class="pdf-container">
+        <embed src="Portfolio_Eunji_Hong.pdf" type="application/pdf" title="Portfolio Preview">
+    </div>
 </body>
 
 </html>
